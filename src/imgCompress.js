@@ -62,7 +62,7 @@
 
 import React, { useState, useEffect } from "react";
 import imageCompression from "browser-image-compression";
-import { Card } from "react-bootstrap";
+import { Card,Alert } from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const ImageCompressor = () => {
@@ -74,6 +74,7 @@ const ImageCompressor = () => {
     const [outputFileName, setOutputFileName] = useState("");
     const [clicked, setClicked] = useState(false);
     const [uploadImage, setUploadImage] = useState(false);
+    const [errorObj, setErrorObj] = useState({issError: false, message:""});
 
     const handle = (e) => {
         const imageFile = e.target.files[0];
@@ -83,7 +84,7 @@ const ImageCompressor = () => {
         setUploadImage(true);
     };
 
-    const click = (e) => {
+    const click = async (e) => {
         e.preventDefault();
 
         const options = {
@@ -93,17 +94,15 @@ const ImageCompressor = () => {
         };
 
         if (options.maxSizeMB >= originalImage.size / 1024) {
-            alert("Image is too small, can't be Compressed!");
+            // alert("Image is too small, can't be Compressed!");
+            setErrorObj({issError: true, message:"Image is too small, can't be Compressed!"})
             return;
         }
 
-        let output;
-        imageCompression(originalImage, options)
-        .then((x) => {
-            output = x;
-            const downloadLink = URL.createObjectURL(output);
-            setCompressedLink(downloadLink);
-        });
+        let compressedFile = await imageCompression(originalImage, options);
+        //await uploadToServer(compressedFile); // write your own logic
+        const downloadLink = URL.createObjectURL(compressedFile);
+        setCompressedLink(downloadLink);
 
         setClicked(true);
     };
@@ -119,6 +118,11 @@ const ImageCompressor = () => {
                 <h3>1. Upload Image</h3>
                 <h3>2. Click on Compress</h3>
                 <h3>3. Download Compressed Image</h3>
+                <div className="row mt-1">
+                    {errorObj.issError && <Alert variant="danger" dismissible={true}>
+                        {errorObj.message}
+                        </Alert>}
+                </div>
                 <div className="row mt-2">
                     <div className="col-xl-4 col-lg-4 col-md-12 col-sm-12">
                         <input
